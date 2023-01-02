@@ -4,13 +4,14 @@ param(
 
     [Parameter(Mandatory)]$rgName,
     [Parameter(Mandatory)]$location,
-    [Parameter(Mandatory)]$saName
- #   [Parameter(Mandatory)]$AZURE_USER,
- #   [Parameter(Mandatory)]$AZURE_SECRET,
- #   [Parameter(Mandatory)]$AZURE_TENANT,
- #   [Parameter(Mandatory)]$AZURE_SUBSCRIPTIONS
     [Parameter(Mandatory)]$vnName,
-    [Parameter(Mandatory)]$snetName
+    [Parameter(Mandatory)]$snetName,
+    [Parameter(Mandatory)]$saName
+
+    #   [Parameter(Mandatory)]$AZURE_USER,
+    #   [Parameter(Mandatory)]$AZURE_SECRET,
+    #   [Parameter(Mandatory)]$AZURE_TENANT,
+    #   [Parameter(Mandatory)]$AZURE_SUBSCRIPTIONS
 
 )
 
@@ -43,9 +44,9 @@ try {
     connect-AzAccount
     
     # $sec = $AZURE_SECRET | ConvertTo-SecureString -AsPlainText -Force
-  # $credential = New-Object System.Management.Automation.PSCredential ($AZURE_USER, $sec)
-  # $conn = connect-AzAccount -Credential $credential -TenantId $AZURE_TENANT
-  # Set-azcontext -Subscriptionid $AZURE_SUBSCRIPTIONS
+    # $credential = New-Object System.Management.Automation.PSCredential ($AZURE_USER, $sec)
+    # $conn = connect-AzAccount -Credential $credential -TenantId $AZURE_TENANT
+    # Set-azcontext -Subscriptionid $AZURE_SUBSCRIPTIONS
 }
     catch {
         
@@ -66,8 +67,10 @@ if(!$existingRG){
         #New-AzResourceGroup -Name $rgName -Location $location
 
         New-AzSubscriptionDeployment -name $rgName -Location $location -TemplateFile ".\RGdeployment.json"
-
-        CustomLog("Resourcegroup created succesfully")
+        
+        if($existingRG){
+           CustomLog("Resourcegroup created succesfully")
+        }
 
     }
 
@@ -112,7 +115,11 @@ if($existingRG){
 
         New-AzResourceGroupDeployment -ResourceGroupName $existingRG.ResourceGroupName -location $location -storageAccountName $saName  -TemplateFile ".\StorageAccount.json"
 
-        CustomLog("Storage account created succesfully")
+        $newSA = Get-AzStorageAccount -ResourceGroupName $existingRG.ResourceGroupName -Name $saName
+
+        if($newSA){
+            CustomLog("Storage account created succesfully")
+        }
 
     }
 
