@@ -3,11 +3,11 @@
 param(
 
     [Parameter(Mandatory)]$rgName,
-    [Parameter(Mandatory)]$location,
-    [Parameter(Mandatory)]$AZURE_USER,
-    [Parameter(Mandatory)]$AZURE_SECRET,
-    [Parameter(Mandatory)]$AZURE_TENANT,
-    [Parameter(Mandatory)]$AZURE_SUBSCRIPTIONS
+    [Parameter(Mandatory)]$location
+ #   [Parameter(Mandatory)]$AZURE_USER,
+ #   [Parameter(Mandatory)]$AZURE_SECRET,
+ #   [Parameter(Mandatory)]$AZURE_TENANT,
+ #   [Parameter(Mandatory)]$AZURE_SUBSCRIPTIONS
 )
 
 # [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
@@ -36,10 +36,12 @@ function CustomLog ($message) {
 
 try {
     
-    $sec = $AZURE_SECRET | ConvertTo-SecureString -AsPlainText -Force
-   $credential = New-Object System.Management.Automation.PSCredential ($AZURE_USER, $sec)
-   $conn = connect-AzAccount -Credential $credential -TenantId $AZURE_TENANT
-   Set-azcontext -Subscriptionid $AZURE_SUBSCRIPTIONS
+    connect-AzAccount
+    
+    # $sec = $AZURE_SECRET | ConvertTo-SecureString -AsPlainText -Force
+  # $credential = New-Object System.Management.Automation.PSCredential ($AZURE_USER, $sec)
+  # $conn = connect-AzAccount -Credential $credential -TenantId $AZURE_TENANT
+  # Set-azcontext -Subscriptionid $AZURE_SUBSCRIPTIONS
 }
     catch {
         
@@ -57,7 +59,9 @@ if(!$existingRG){
 
     try {
 
-        New-AzResourceGroup -Name $rgName -Location $location
+        #New-AzResourceGroup -Name $rgName -Location $location
+
+        New-AzSubscriptionDeployment -name $rgName -Location $location -TemplateFile ".\RGdeployment.json"
 
         CustomLog("Resourcegroup created succesfully")
 
@@ -69,3 +73,4 @@ if(!$existingRG){
 
     }
 }
+
