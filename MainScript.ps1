@@ -4,6 +4,7 @@ param(
 
     [Parameter(Mandatory)]$rgName,
     [Parameter(Mandatory)]$location,
+    [Parameter(Mandatory)]$saName
  #   [Parameter(Mandatory)]$AZURE_USER,
  #   [Parameter(Mandatory)]$AZURE_SECRET,
  #   [Parameter(Mandatory)]$AZURE_TENANT,
@@ -77,6 +78,8 @@ if(!$existingRG){
     }
 }
 
+#Virtual Network Deployment
+
 if($existingRG){
 
     CustomLog("Creating Virtual Network")
@@ -93,6 +96,30 @@ if($existingRG){
     }
     catch {
         Throw "Deployment failed: $_"
+    }
+}
+
+# Storage Account Deployment
+
+
+if($existingRG){
+
+    CustomLog("Getting StorageAccount details")
+
+    try {
+
+        #New-AzResourceGroup -Name $rgName -Location $location
+
+        New-AzResourceGroupDeployment -ResourceGroupName $existingRG.ResourceGroupName -location $location -storageAccountName $saName  -TemplateFile ".\StorageAccount.json"
+
+        CustomLog("Storage account created succesfully")
+
+    }
+
+    catch {
+
+         Throw "Deployment failed: $_"
+
     }
 }
 
