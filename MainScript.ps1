@@ -3,7 +3,8 @@
 param(
 
     [Parameter(Mandatory)]$rgName,
-    [Parameter(Mandatory)]$location
+    [Parameter(Mandatory)]$location,
+    [Parameter(Mandatory)]$saName
  #   [Parameter(Mandatory)]$AZURE_USER,
  #   [Parameter(Mandatory)]$AZURE_SECRET,
  #   [Parameter(Mandatory)]$AZURE_TENANT,
@@ -64,6 +65,33 @@ if(!$existingRG){
         New-AzSubscriptionDeployment -name $rgName -Location $location -TemplateFile ".\RGdeployment.json"
 
         CustomLog("Resourcegroup created succesfully")
+
+    }
+
+    catch {
+
+         Throw "Deployment failed: $_"
+
+    }
+}
+
+# Storage Account Deployment
+
+#Find existingSA or create new
+
+#$existingSA = Get-AzStorageAccount | Where-Object {$_.StorageAccountName -eq $saName}
+
+if($existingRG){
+
+    CustomLog("Getting StorageAccount details")
+
+    try {
+
+        #New-AzResourceGroup -Name $rgName -Location $location
+
+        New-AzResourceGroupDeployment -ResourceGroupName $existingRG.ResourceGroupName -location $location -storageAccountName $saName  -TemplateFile ".\StorageAccount.json"
+
+        CustomLog("Storage account created succesfully")
 
     }
 
