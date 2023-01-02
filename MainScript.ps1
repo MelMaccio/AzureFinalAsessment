@@ -3,11 +3,14 @@
 param(
 
     [Parameter(Mandatory)]$rgName,
-    [Parameter(Mandatory)]$location
+    [Parameter(Mandatory)]$location,
  #   [Parameter(Mandatory)]$AZURE_USER,
  #   [Parameter(Mandatory)]$AZURE_SECRET,
  #   [Parameter(Mandatory)]$AZURE_TENANT,
  #   [Parameter(Mandatory)]$AZURE_SUBSCRIPTIONS
+    [Parameter(Mandatory)]$vnName,
+    [Parameter(Mandatory)]$snetName
+
 )
 
 # [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
@@ -71,6 +74,25 @@ if(!$existingRG){
 
          Throw "Deployment failed: $_"
 
+    }
+}
+
+if($existingRG){
+
+    CustomLog("Creating Virtual Network")
+
+    try {
+        New-AzResourceGroupDeployment -ResourceGroupName $existingRG.ResourceGroupName -vnName $vnName -snetName $snetName -TemplateFile ".\VNDeployment.json"
+
+        $newVN = Get-AzVirtualNetwork -Name $vnName -ResourceGroupName $existingRG.ResourceGroupName
+
+        if($newVN){
+            CustomLog("Virtual Network created succesfully")
+        }
+
+    }
+    catch {
+        Throw "Deployment failed: $_"
     }
 }
 
