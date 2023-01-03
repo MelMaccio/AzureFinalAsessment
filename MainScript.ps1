@@ -2,6 +2,7 @@
 
 param(
 
+    [Parameter(Mandatory)]$kvName,
     [Parameter(Mandatory)]$rgName,
     [Parameter(Mandatory)]$location,
     [Parameter(Mandatory)]$vnName,
@@ -130,3 +131,24 @@ if($existingRG){
     }
 }
 
+#Find a Key Vault or create a new one
+
+$existingKV = Get-AzKeyVault | Where-Object {$_.Name -eq $kvName}
+
+if(!$existingKV){
+
+    CustomLog("Getting KeyVault details")
+
+    try{
+
+        New-AzResourceGroupDeployment -ResourceGroupName $existingRG.ResourceGroupName -location $location -kvName $kvName  -TemplateFile ".\KVDeployment.json"
+
+        CustomLog("KeyVault created succesfully")
+    }
+   
+    catch{
+
+        Throw "Deployment failed: $_"
+
+    }
+}
