@@ -98,7 +98,7 @@ if($existingRG){
     CustomLog("Getting StorageAccount details")
 
     try {
-
+            
         #New-AzResourceGroup -Name $rgName -Location $location
 
         New-AzResourceGroupDeployment -ResourceGroupName $existingRG.ResourceGroupName -location $location -storageAccountName $saName  -TemplateFile ".\StorageAccount.json"
@@ -123,7 +123,7 @@ if($existingRG){
 $existingKV = Get-AzKeyVault | Where-Object {$_.Name -eq $kvName}
 
 if(!$existingKV){
-
+ 
     CustomLog("Getting KeyVault details")
 
     try{
