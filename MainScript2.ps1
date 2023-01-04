@@ -4,7 +4,8 @@ param (
     $location,
     $vnName,
     $snetName,
-    $saName
+    $saName,
+    $kvName
 )
 
 connect-AzAccount
@@ -112,6 +113,30 @@ function Manage-ResourceGroup {
     }
 }
 
+function Manage-KeyVault {
+    param(
+     $createordestroy,
+     $kvName,
+     $existingRG,
+     $location = "eastus"
+    )
+    if($createordestroy -eq "create") {
+     try {
+         New-AzResourceGroupDeployment -ResourceGroupName $existingRG.ResourceGroupName -location $location -kvName $kvName  -TemplateFile ".\KVDeployment.json"
+         $deploymentKV = (Get-AzKeyVault -VaultName $kvName).ResourceId
+         if($deploymentKV){
+             CustomLog("Key Vault created successfully. ID: ")
+             CustomLog($deploymentKV)
+         }
+     }
+     catch {
+         Throw "Deployment failed: $_"
+     }
+    } else {
+        Remove-AzKeyVault -VaultName $kvName  -ResourceGroupName $existingRG.ResourceGroupName -PassThru
+    }
+}
+
 #Validaciones: naming convention, parametros, etc
 
 #Logica ppal o MainScript
@@ -140,3 +165,6 @@ function Manage-ResourceGroup {
 
 # Manage-ResourceGroup -createordestroy $CreateOrDestroy -rgName $rgName -Location $location
 
+# $kvName = "keyvaultbebe2"
+
+# Manage-KeyVault -createordestroy $CreateOrDestroy -existingRG $existingRG -kvName $kvName
