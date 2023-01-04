@@ -8,11 +8,18 @@ param (
     $kvName
 )
 
+
+
+
+# $CreateOrDestroy = Read-Host -Prompt "What do you want to do? Create Or Destroy: "
+
 connect-AzAccount
 
-$existingRG= Get-AzResourceGroup | Where-Object {$_.ResourceGroupName -eq $rgName} 
+$global:existingRG = Get-AzResourceGroup | Where-Object {$_.ResourceGroupName -eq $rgName} 
+
 Write-Output "Imprimiendo variables"
-$existingRG
+
+#Write-Output $existingRG.name
 
 #Funciones: para crear o destruir un recurso, loggeo, loggeoResourceID
 
@@ -34,7 +41,6 @@ function CustomLog ($message) {
 function Manage-VirtualNetwork {
     param (
         $createordestroy,
-        $existingRG,
         $vnName = "vnet_test",
         $snetName = "snet_test"
     )
@@ -64,7 +70,6 @@ function Manage-VirtualNetwork {
 function Manage-StorageAccount {
     param (
         $createordestroy,
-        $existingRG,
         $saName,
         $location = "eastus"
     )
@@ -94,15 +99,15 @@ function Manage-ResourceGroup {
     param(
         $createordestroy,
         $rgName,
-        $location = "eastus"
+        $location
     )
     if ($createordestroy -eq "create") {
         CustomLog("Getting Resource Group details")
         try {
-            $deploymentRG = New-AzSubscriptionDeployment -rgName $rgName -Location $location -TemplateFile ".\RGdeployment.json"
-            if ($deploymentRG) {
+            $global:existingRG = New-AzSubscriptionDeployment -rgName $rgName -Location $location -TemplateFile ".\RGdeployment.json"
+            if ($existingRG) {
                 CustomLog("Resource Group created successfully. ID: ")
-                CustomLog($deploymentRG.Id)
+                CustomLog($existingRG.Id)                
             }
         }
         catch {
@@ -117,8 +122,7 @@ function Manage-KeyVault {
     param(
      $createordestroy,
      $kvName,
-     $existingRG,
-     $location = "eastus"
+     $location
     )
     if($createordestroy -eq "create") {
      try {
@@ -137,34 +141,41 @@ function Manage-KeyVault {
     }
 }
 
+
+
+
 #Validaciones: naming convention, parametros, etc
 
 #Logica ppal o MainScript
 
-# if($CreateOrDestroy -eq "create"){
-#     #creacion de recursos en cascada
+ if($CreateOrDestroy -eq "create"){
 
-# }elseif ($CreateOrDestroy -eq "destroy") {
-#     #destruccion de recursos
+    $vnName = "vnet_test"
+    $snetName = "snet_test"
+    $saName = "melinasa123"
+    $rgName = "teodiorg" 
+    $kvName = "kvfacundoagrafa"
+    
+    #If null create RG
+    if ($existingRG -eq $null) {
+        Manage-ResourceGroup -createordestroy $CreateOrDestroy -rgName $rgName -Location $location
+    }
+    
+    Manage-KeyVault -createordestroy $CreateOrDestroy -kvName $kvName -location $location
+    Manage-StorageAccount -createordestroy $CreateOrDestroy -saName $saName
+    Manage-VirtualNetwork -createordestroy $CreateOrDestroy -vnName $vnName -snetName $snetName
 
-# }else{
-#     throw "Valor no permitido"
-#     Write-Verbose "Valor no permitido"
-# }
+}elseif ($CreateOrDestroy -eq "destroy") {
+        
+    Manage-ResourceGroup -createordestroy $CreateOrDestroy -rgName $rgName -Location $location
+    Manage-KeyVault -createordestroy $CreateOrDestroy -kvName $kvName -location $location
+    Manage-StorageAccount -createordestroy $CreateOrDestroy -saName $saName
+    Manage-VirtualNetwork -createordestroy $CreateOrDestroy -vnName $vnName -snetName $snetName
 
-# $vnName = "vnet_test"
-# $snetName = "snet_test"
+}else{
+    throw "Valor no permitido"
+    Write-Verbose "Valor no permitido"
+}
 
-# $saName = "melinasa123"
 
-# Manage-VirtualNetwork -createordestroy $CreateOrDestroy -existingRG $existingRG -vnName $vnName -snetName $snetName
 
-# Manage-StorageAccount -createordestroy $CreateOrDestroy -existingRG $existingRG -saName
-
-# $rgName = "teodiorg"
-
-# Manage-ResourceGroup -createordestroy $CreateOrDestroy -rgName $rgName -Location $location
-
-# $kvName = "keyvaultbebe2"
-
-# Manage-KeyVault -createordestroy $CreateOrDestroy -existingRG $existingRG -kvName $kvName
