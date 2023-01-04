@@ -19,7 +19,7 @@ function CustomLog ($message) {
 
     $date = Get-Date
 
-    Write-Verbose "$date | $message" -Verbose
+    # Write-Verbose "$date | $message" -Verbose
 
     "$date | $message" | Out-File 'C:\temp\mylog.txt' -Append
 
@@ -89,7 +89,28 @@ function Manage-StorageAccount {
     
 }
 
-
+function Manage-ResourceGroup {
+    param(
+        $createordestroy,
+        $rgName,
+        $location = "eastus"
+    )
+    if ($createordestroy -eq "create") {
+        CustomLog("Getting Resource Group details")
+        try {
+            $deploymentRG = New-AzSubscriptionDeployment -rgName $rgName -Location $location -TemplateFile ".\RGdeployment.json"
+            if ($deploymentRG) {
+                CustomLog("Resource Group created successfully. ID: ")
+                CustomLog($deploymentRG.Id)
+            }
+        }
+        catch {
+            Throw "Deployment failed: $_"
+        }
+    }else {
+        Remove-AzResourceGroup -Name $rgName 
+    }
+}
 
 #Validaciones: naming convention, parametros, etc
 
@@ -114,4 +135,8 @@ function Manage-StorageAccount {
 # Manage-VirtualNetwork -createordestroy $CreateOrDestroy -existingRG $existingRG -vnName $vnName -snetName $snetName
 
 # Manage-StorageAccount -createordestroy $CreateOrDestroy -existingRG $existingRG -saName
+
+# $rgName = "teodiorg"
+
+# Manage-ResourceGroup -createordestroy $CreateOrDestroy -rgName $rgName -Location $location
 
