@@ -107,9 +107,37 @@ function Manage-ResourceGroup {
         catch {
             Throw "Deployment failed: $_"
         }
-    }else {
+   }else {
         Remove-AzResourceGroup -Name $rgName 
     }
+}
+
+
+function Manage-KeyVault {
+   param(
+    $createordestroy,
+    $kvName,
+    $existingRG,
+    $location
+   )
+
+   if($createordestroy -eq "create") {
+    try {
+        New-AzResourceGroupDeployment -ResourceGroupName $existingRG.ResourceGroupName -location $location -VaultName $kvName  -TemplateFile ".\KVDeployment.json"
+        $deploymentKV = Get-AzKeyVault -VaultName $kvName
+        if($deploymentKV){
+            CustomLog("Key Vault created successfully. ID: ")
+            CustomLog($deploymentKV.Id)
+        }
+    }
+    catch {
+        Throw "Deployment failed: $_"
+    }
+    
+   } else {
+    Remove-AzKeyVault -VaultName $kvName  -ResourceGroupName $existingRG -PassThru
+   }
+   
 }
 
 #Validaciones: naming convention, parametros, etc
