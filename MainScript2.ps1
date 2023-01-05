@@ -1,14 +1,12 @@
 param (
     [Parameter(Mandatory)]$CreateOrDestroy,
     $rgName,
-    $location,
+    $location ,
     $vnName,
     $snetName,
     $saName,
     $kvName
 )
-
-
 
 
 # $CreateOrDestroy = Read-Host -Prompt "What do you want to do? Create Or Destroy: "
@@ -38,6 +36,30 @@ function CustomLog ($message) {
     Write-Output "#################"
 
 }
+
+function Manage-ResourceGroup {
+    param(
+        $createordestroy,
+        $rgName,
+        $location = "eastus"
+    )
+    if ($createordestroy -eq "create") {
+        CustomLog("Getting Resource Group details")
+        try {
+            $global:existingRG = New-AzSubscriptionDeployment -rgName $rgName -Location $location -TemplateFile ".\RGdeployment.json"
+            if ($existingRG) {
+                CustomLog("Resource Group created successfully. ID: ")
+                CustomLog($existingRG.Id)                
+            }
+        }
+        catch {
+            Throw "Deployment failed: $_"
+        }
+    }else {
+        Remove-AzResourceGroup -Name $rgName 
+    }
+}
+
 function Manage-VirtualNetwork {
     param (
         $createordestroy,
@@ -71,7 +93,8 @@ function Manage-StorageAccount {
     param (
         $createordestroy,
         $saName,
-        $location = "eastus"
+        $location = "eastus",
+        $existingRG
     )
 
    if($createordestroy -eq "create"){
@@ -95,34 +118,12 @@ function Manage-StorageAccount {
     
 }
 
-function Manage-ResourceGroup {
-    param(
-        $createordestroy,
-        $rgName,
-        $location
-    )
-    if ($createordestroy -eq "create") {
-        CustomLog("Getting Resource Group details")
-        try {
-            $global:existingRG = New-AzSubscriptionDeployment -rgName $rgName -Location $location -TemplateFile ".\RGdeployment.json"
-            if ($existingRG) {
-                CustomLog("Resource Group created successfully. ID: ")
-                CustomLog($existingRG.Id)                
-            }
-        }
-        catch {
-            Throw "Deployment failed: $_"
-        }
-    }else {
-        Remove-AzResourceGroup -Name $rgName 
-    }
-}
-
 function Manage-KeyVault {
     param(
      $createordestroy,
      $kvName,
-     $location
+     $location,
+     $existingRG
     )
     if($createordestroy -eq "create") {
      try {
@@ -142,39 +143,50 @@ function Manage-KeyVault {
 }
 
 
-
-
 #Validaciones: naming convention, parametros, etc
 
 #Logica ppal o MainScript
 
  if($CreateOrDestroy -eq "create"){
 
-    $vnName = "vnet_test"
-    $snetName = "snet_test"
-    $saName = "melinasa123"
-    $rgName = "teodiorg" 
-    $kvName = "kvfacundoagrafa"
+    $vnName = "vneestasdsa"
+    $snetName = "snetasdstsda"
+    $saName = "safacotsda"
+    $rgName = "rgtesst1" 
+    $kvName = "kvfafteasssand"
+    $location = "eastus"
+
+    $global:existingRG = Get-AzResourceGroup | Where-Object {$_.ResourceGroupName -eq $rgName} 
     
     #If null create RG
     if ($existingRG -eq $null) {
-        Manage-ResourceGroup -createordestroy $CreateOrDestroy -rgName $rgName -Location $location
+        Manage-ResourceGroup -createordestroy $CreateOrDestroy -rgName $rgName -location $location
+        $global:existingRG = Get-AzResourceGroup | Where-Object {$_.ResourceGroupName -eq $rgName} 
+
     }
     
-    Manage-KeyVault -createordestroy $CreateOrDestroy -kvName $kvName -location $location
-    Manage-StorageAccount -createordestroy $CreateOrDestroy -saName $saName
-    Manage-VirtualNetwork -createordestroy $CreateOrDestroy -vnName $vnName -snetName $snetName
+    Start-Sleep -Seconds 20
+    Manage-KeyVault -createordestroy $CreateOrDestroy -kvName $kvName -location $location -existingRG $existingRG
+    Manage-StorageAccount -createordestroy $CreateOrDestroy -saName $saName -existingRG $existingRG
+    Manage-VirtualNetwork -createordestroy $CreateOrDestroy -vnName $vnName -snetName $snetName -existingRG $existingRG
 
-}elseif ($CreateOrDestroy -eq "destroy") {
-        
-    Manage-ResourceGroup -createordestroy $CreateOrDestroy -rgName $rgName -Location $location
-    Manage-KeyVault -createordestroy $CreateOrDestroy -kvName $kvName -location $location
-    Manage-StorageAccount -createordestroy $CreateOrDestroy -saName $saName
-    Manage-VirtualNetwork -createordestroy $CreateOrDestroy -vnName $vnName -snetName $snetName
+} 
+    if($CreateOrDestroy -eq "destroy") {
 
-}else{
-    throw "Valor no permitido"
-    Write-Verbose "Valor no permitido"
+        $vnName = "vneestasdsa"
+        $snetName = "snetasdstsda"
+        $saName = "safacotsda"
+        $rgName = "rgtesst1" 
+        $kvName = "kvfafteasssand"
+        $location = "eastus"
+    
+        $global:existingRG = Get-AzResourceGroup | Where-Object {$_.ResourceGroupName -eq $rgName} 
+        Manage-ResourceGroup -createordestroy $CreateOrDestroy -rgName $rgName -location $location -force
+
+}
+else
+{
+    throw "Invalid value"
 }
 
 
