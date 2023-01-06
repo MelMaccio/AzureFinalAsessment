@@ -8,32 +8,17 @@ param (
     $kvName
 )
 
-
-# $CreateOrDestroy = Read-Host -Prompt "What do you want to do? Create Or Destroy: "
-
 connect-AzAccount
 
 $global:existingRG = Get-AzResourceGroup | Where-Object {$_.ResourceGroupName -eq $rgName} 
-
-Write-Output "Imprimiendo variables"
-
-#Write-Output $existingRG.name
-
-#Funciones: para crear o destruir un recurso, loggeo, loggeoResourceID
 
 function CustomLog ($message) {
 
     $date = Get-Date
 
-    # Write-Verbose "$date | $message" -Verbose
-
     "$date | $message" | Out-File 'C:\temp\mylog.txt' -Append
 
-    Write-Output "#################"
-
     Write-Output "$message"
-
-    Write-Output "#################"
 
 }
 
@@ -44,7 +29,7 @@ function Manage-ResourceGroup {
         $location = "eastus"
     )
     if ($createordestroy -eq "create") {
-        CustomLog("Getting Resource Group details")
+        CustomLog("Creating Resource Group...")
         try {
             $global:existingRG = New-AzSubscriptionDeployment -rgName $rgName -Location $location -TemplateFile ".\RGdeployment.json"
             if ($existingRG) {
@@ -68,6 +53,8 @@ function Manage-VirtualNetwork {
     )
 
     if($createordestroy -eq "create"){
+
+        CustomLog("Creating Virtual Network...")
        try {
          $deploymentVN = New-AzResourceGroupDeployment -ResourceGroupName $existingRG.ResourceGroupName -vnName $vnName -snetName $snetName -TemplateFile ".\VNDeployment.json"
          $resourceId = (Get-AzVirtualNetwork -ResourceGroupName $existingRG.ResourceGroupName -Name $vnName).Id
@@ -98,6 +85,8 @@ function Manage-StorageAccount {
     )
 
    if($createordestroy -eq "create"){
+
+    CustomLog("Creating Storage Account...")
       try {
 
         $deploymentSA = New-AzResourceGroupDeployment -ResourceGroupName $existingRG.ResourceGroupName -location $location -storageAccountName $saName  -TemplateFile ".\SADeployment.json"
@@ -126,6 +115,8 @@ function Manage-KeyVault {
      $existingRG
     )
     if($createordestroy -eq "create") {
+
+        CustomLog("Creating Key Vault...")
      try {
          New-AzResourceGroupDeployment -ResourceGroupName $existingRG.ResourceGroupName -location $location -kvName $kvName  -TemplateFile ".\KVDeployment.json"
          $deploymentKV = (Get-AzKeyVault -VaultName $kvName).ResourceId
@@ -142,10 +133,7 @@ function Manage-KeyVault {
     }
 }
 
-
-#Validaciones: naming convention, parametros, etc
-
-#Logica ppal o MainScript
+#MainScript
 
  if($CreateOrDestroy -eq "create"){
 
@@ -157,8 +145,7 @@ function Manage-KeyVault {
     $location = "eastus"
 
     $global:existingRG = Get-AzResourceGroup | Where-Object {$_.ResourceGroupName -eq $rgName} 
-    
-    #If null create RG
+
     if ($existingRG -eq $null) {
         Manage-ResourceGroup -createordestroy $CreateOrDestroy -rgName $rgName -location $location
         $global:existingRG = Get-AzResourceGroup | Where-Object {$_.ResourceGroupName -eq $rgName} 
